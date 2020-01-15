@@ -32,7 +32,9 @@ import Data.List (foldl')
 -- >>> sumList [1, 3, 5, 7, 9, 11]
 -- 36
 
-sumList xs = error "TBD:sumList"
+sumList :: [Int] -> Int
+sumList [] = 0
+sumList (x:xs) = x + sumList xs
 
 
 -- | `digitsOfInt n` should return `[]` if `n` is not positive,
@@ -46,7 +48,9 @@ sumList xs = error "TBD:sumList"
 -- [3, 5, 2, 6, 6, 3]
 
 digitsOfInt :: Int -> [Int]
-digitsOfInt n = error "TBD:digitsOfInt"
+digitsOfInt 0 = []
+digitsOfInt n = if n > 0 then digitsOfInt (n `div` 10) ++ [n `mod` 10]          
+                else []
 
 
 -- | `digits n` retruns the list of digits of `n`
@@ -79,7 +83,8 @@ digits n = digitsOfInt (abs n)
 -- 2
 
 additivePersistence :: Int -> Int
-additivePersistence n = error "TBD"
+additivePersistence n = if n < 10 then 0
+                        else 1 + additivePersistence(sumList(digits n))
 
 -- | digitalRoot n is the digit obtained at the end of the sequence
 --   computing the additivePersistence
@@ -87,7 +92,9 @@ additivePersistence n = error "TBD"
 -- >>> digitalRoot 9876
 -- 3
 digitalRoot :: Int -> Int
-digitalRoot n = error "TBD"
+digitalRoot n
+    | n < 10 = n
+    | otherwise = digitalRoot(sumList(digits n))
 
 
 -- | listReverse [x1,x2,...,xn] returns [xn,...,x2,x1]
@@ -102,7 +109,8 @@ digitalRoot n = error "TBD"
 -- ["bicycle", "my", "ride", "to", "want", "i"]
 
 listReverse :: [a] -> [a]
-listReverse xs = error "TBD"
+listReverse [] = []
+listReverse (x:xs) = listReverse xs ++ [x]
 
 -- | In Haskell, a `String` is a simply a list of `Char`, that is:
 --
@@ -116,7 +124,7 @@ listReverse xs = error "TBD"
 -- False
 
 palindrome :: String -> Bool
-palindrome w = error "TBD"
+palindrome w = if listReverse w == w then True else False
 
 
 foldLeft :: (a -> b -> a) -> a -> [b] -> a
@@ -136,8 +144,8 @@ foldLeft = foldl'
 sqSum :: [Int] -> Int
 sqSum xs = foldLeft f base xs
   where
-   f a x = error "TBD: sqSum f"
-   base  = error "TBD: sqSum base"
+   f a x = a + x*x
+   base  = 0
 
 
 
@@ -155,8 +163,8 @@ sqSum xs = foldLeft f base xs
 pipe :: [(a -> a)] -> (a -> a)
 pipe fs   = foldLeft f base fs
   where
-    f a x = error "TBD"
-    base  = error "TBD"
+    f a x = a.x
+    base  = \x -> x
 
 -- | `sepConcat sep [s1,...,sn]` returns `s1 ++ sep ++ s2 ++ ... ++ sep ++ sn`
 --
@@ -173,9 +181,9 @@ sepConcat :: String -> [String] -> String
 sepConcat sep []    = ""
 sepConcat sep (h:t) = foldLeft f base l
   where
-    f a x           = error "TBD"
-    base            = error "TBD"
-    l               = error "TBD"
+    f a x           = a ++ sep ++ x
+    base            = h
+    l               = t
 
 
 intString :: Int -> String
@@ -194,7 +202,7 @@ intString = show
 -- "[[1, 2, 3], [4, 5], [6], []]"
 
 stringOfList :: (a -> String) -> [a] -> String
-stringOfList f xs = error "TBD:stringOfList"
+stringOfList f xs = "[" ++ (sepConcat "," (map f xs)) ++ "]"
 
 -- | `clone x n` returns a `[x,x,...,x]` containing `n` copies of `x`
 --
@@ -205,7 +213,9 @@ stringOfList f xs = error "TBD:stringOfList"
 -- ["foo", "foo"]
 
 clone :: a -> Int -> [a]
-clone x n = error "TBD"
+clone x n = 
+    if n <= 0 then []
+    else x:clone x (n-1)
 
 type BigInt = [Int]
 
@@ -220,7 +230,11 @@ type BigInt = [Int]
 -- [1,0,0,2] [0,0,9,9]
 
 padZero :: BigInt -> BigInt -> (BigInt, BigInt)
-padZero l1 l2 = error "TBD"
+padZero l1 l2 =
+    if length l1 < length l2
+        then ((clone 0 (length l2 - length l1)) ++ l1, l2)
+    else
+        (l1, (clone 0 (length l1 - length l2)) ++ l2)
 
 -- | `removeZero ds` strips out all leading `0` from the left-side of `ds`.
 --
@@ -234,7 +248,9 @@ padZero l1 l2 = error "TBD"
 -- []
 
 removeZero :: BigInt -> BigInt
-removeZero ds = error "TBD"
+removeZero (d:ds) =
+    if d == 0 then removeZero ds else d:ds
+removeZero ds = []
 
 
 -- | `bigAdd n1 n2` returns the `BigInt` representing the sum of `n1` and `n2`.
@@ -245,14 +261,18 @@ removeZero ds = error "TBD"
 -- >>> bigAdd [9, 9, 9, 9] [9, 9, 9]
 -- [1, 0, 9, 9, 8]
 
+
+
 bigAdd :: BigInt -> BigInt -> BigInt
 bigAdd l1 l2     = removeZero res
   where
     (l1', l2')   = padZero l1 l2
-    (_  , res)   = foldLeft f base args
-    f a x        = error "TBD"
-    base         = error "TBD"
-    args         = error "TBD"
+    res          = foldLeft f base args
+    f a x        = (\y (n1, n2) -> case y of
+                    [] -> ((n1+n2) `div` 10) : [(n1+n2) `mod`10]
+                    (y:ys) -> ((n1+n2+y) `div` 10) : ((n1+n2+y) `mod`10) : ys) a x
+    base         = []
+    args         = zip (listReverse l1') (listReverse l2')
 
 
 -- | `mulByDigit i n` returns the result of multiplying
@@ -262,7 +282,11 @@ bigAdd l1 l2     = removeZero res
 -- [8,9,9,9,1]
 
 mulByDigit :: Int -> BigInt -> BigInt
-mulByDigit i l = error "TBD"
+mulByDigit i l = multiply i l []
+    where
+        multiply :: Int -> BigInt -> BigInt -> BigInt
+        multiply 0 n acc = acc
+        multiply i n acc = multiply (i-1) n (bigAdd n acc)
 
 -- | `bigMul n1 n2` returns the `BigInt` representing the product of `n1` and `n2`.
 --
@@ -276,6 +300,6 @@ bigMul :: BigInt -> BigInt -> BigInt
 bigMul l1 l2 = res
   where
     (_, res) = foldLeft f base args
-    f a x    = error "TBD"
-    base     = error "TBD"
-    args     = error "TBD"
+    f a x    = (\(x1, x2) y -> (x1 + 1, bigAdd x2 (mulByDigit ((10^x1) * y) l2) )) a x
+    base     = (0, [0])
+    args     = l1
